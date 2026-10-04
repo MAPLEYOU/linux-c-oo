@@ -1,0 +1,37 @@
+<svg width="680" height="318" viewBox="0 0 680 318" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>内存对齐的物理原因</title>
+<desc>CPU 按字批量搬运，未对齐的字段会跨越字边界，需要两次读取再拼接</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="680" height="318" fill="#ffffff"/>
+
+<text x="40" y="34" font-size="14" font-weight="500" fill="#2C2C2A">CPU 不是按字节取内存，是按「字」批量搬</text>
+<text x="40" y="54" font-size="12" fill="#5F5E5A">一个 4 字节的字一次读完；字段若跨字边界，就得读两次再拼接。</text>
+
+<text x="40" y="88" font-size="12" font-weight="500" fill="#0F6E56">对齐时：一个 int 落在同一个字内 → 1 次读取</text>
+<rect x="40" y="98" width="288" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<line x1="112" y1="98" x2="112" y2="146" stroke="#0F6E56" stroke-width="0.5" stroke-dasharray="3 3"/>
+<line x1="184" y1="98" x2="184" y2="146" stroke="#0F6E56" stroke-width="0.5" stroke-dasharray="3 3"/>
+<line x1="256" y1="98" x2="256" y2="146" stroke="#0F6E56" stroke-width="0.5" stroke-dasharray="3 3"/>
+<rect x="112" y="104" width="72" height="36" rx="6" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="148" y="126" font-size="12" fill="#04342C" font-family="monospace" text-anchor="middle">int</text>
+<text x="40" y="168" font-size="11" fill="#0F6E56">字 0　　　　字 1　　　　字 2　　　字 3</text>
+
+<text x="360" y="88" font-size="12" font-weight="500" fill="#A32D2D">未对齐时：int 横跨两个字 → 2 次读取 + 拼接</text>
+<rect x="360" y="98" width="288" height="48" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+<line x1="432" y1="98" x2="432" y2="146" stroke="#A32D2D" stroke-width="0.5" stroke-dasharray="3 3"/>
+<line x1="504" y1="98" x2="504" y2="146" stroke="#A32D2D" stroke-width="0.5" stroke-dasharray="3 3"/>
+<line x1="576" y1="98" x2="576" y2="146" stroke="#A32D2D" stroke-width="0.5" stroke-dasharray="3 3"/>
+<rect x="448" y="104" width="72" height="36" rx="6" fill="#F7C1C1" stroke="#A32D2D" stroke-width="0.5"/>
+<text x="484" y="126" font-size="12" fill="#501313" font-family="monospace" text-anchor="middle">int</text>
+<text x="360" y="168" font-size="11" fill="#A32D2D">字 0　　　　字 1　　　　字 2　　　字 3（跨字 1/2）</text>
+
+<rect x="40" y="190" width="600" height="110" rx="12" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="60" y="216" font-size="13" font-weight="500" fill="#854F0B">对齐解决了什么</text>
+<text x="60" y="240" font-size="12" fill="#854F0B">· 一次总线访问即可取完，避免二次读取 + 拼接的开销</text>
+<text x="60" y="262" font-size="12" fill="#854F0B">· 保持访问原子性：x86 容忍未对齐但会失去原子性</text>
+<text x="60" y="284" font-size="12" fill="#854F0B">· 部分 ARM / SPARC 对未对齐直接抛 SIGBUS，程序崩溃</text>
+</svg>

@@ -1,0 +1,53 @@
+<svg width="680" height="420" viewBox="0 0 680 420" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>container_of 父子指针双向转换</title>
+<desc>upcast 由编译器零成本完成，downcast 必须靠 container_of 做指针减法还原</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="680" height="420" fill="#ffffff"/>
+
+<text x="40" y="36" font-size="14" font-weight="500" fill="#2C2C2A">内存里只有一个对象，两种视角</text>
+<text x="40" y="56" font-size="12" fill="#5F5E5A">子类指针 &amp; 父类指针指向同一地址（因为父类是子类的首成员）</text>
+
+<rect x="60" y="80" width="560" height="120" rx="12" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="80" y="104" font-size="12" font-weight="500" fill="#2C2C2A">struct i2c_client 对象（真实内存）</text>
+
+<rect x="80" y="116" width="120" height="64" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="140" y="140" font-size="12" fill="#042C53" font-family="monospace" text-anchor="middle">struct device</text>
+<text x="140" y="160" font-size="11" fill="#185FA5" font-family="monospace" text-anchor="middle">dev  (0~31)</text>
+
+<rect x="204" y="116" width="120" height="64" rx="8" fill="#D3D1C7" stroke="#888780" stroke-width="0.5"/>
+<text x="264" y="140" font-size="12" fill="#2C2C2A" font-family="monospace" text-anchor="middle">char name[20]</text>
+<text x="264" y="160" font-size="11" fill="#5F5E5A" font-family="monospace" text-anchor="middle">offsetof = 32</text>
+
+<rect x="328" y="116" width="120" height="64" rx="8" fill="#D3D1C7" stroke="#888780" stroke-width="0.5"/>
+<text x="388" y="140" font-size="12" fill="#2C2C2A" font-family="monospace" text-anchor="middle">unsigned short addr</text>
+<text x="388" y="160" font-size="11" fill="#5F5E5A" font-family="monospace" text-anchor="middle">0x3D31</text>
+
+<rect x="452" y="116" width="148" height="64" rx="8" fill="none" stroke="#B4B2A9" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text x="526" y="152" font-size="11" fill="#888780" text-anchor="middle">其余字段…</text>
+
+<line x1="88" y1="196" x2="88" y2="216" stroke="#185FA5" stroke-width="1"/>
+<text x="94" y="212" font-size="11" fill="#185FA5" font-family="monospace">&amp;client == &amp;client-&gt;dev == 0x…5000</text>
+
+<path d="M200 214 L 200 236" stroke="#185FA5" stroke-width="1"/>
+<text x="200" y="252" font-size="12" fill="#185FA5" font-family="monospace">offsetof(struct i2c_client, dev) = 32</text>
+
+<rect x="60" y="272" width="560" height="130" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+
+<text x="88" y="300" font-size="13" font-weight="500" fill="#0C447C">↑ upcast 子 → 父</text>
+<text x="88" y="322" font-size="12" fill="#185FA5" font-family="monospace">struct device *d = &amp;client-&gt;dev;</text>
+<text x="88" y="342" font-size="12" fill="#185FA5" font-family="monospace">struct device *d = (struct device *)client;</text>
+<text x="88" y="366" font-size="12" fill="#0C447C">编译器直接原样赋值，零指令开销（地址相同）</text>
+<text x="88" y="386" font-size="11" fill="#185FA5" font-family="monospace">汇编证据：mov rax, rcx</text>
+
+<line x1="360" y1="290" x2="360" y2="392" stroke="#B4B2A9" stroke-width="0.5" stroke-dasharray="4 3"/>
+
+<text x="392" y="300" font-size="13" font-weight="500" fill="#854F0B">↓ downcast 父 → 子</text>
+<text x="392" y="322" font-size="12" fill="#854F0B" font-family="monospace">struct i2c_client *c =</text>
+<text x="392" y="340" font-size="12" fill="#854F0B" font-family="monospace">    container_of(d, struct i2c_client, dev);</text>
+<text x="392" y="366" font-size="12" fill="#854F0B">展开即「把地址减 32」，需要人工算偏移</text>
+<text x="392" y="386" font-size="11" fill="#854F0B" font-family="monospace">汇编证据：lea rax, -32[rcx]</text>
+</svg>

@@ -1,0 +1,40 @@
+<svg width="680" height="386" viewBox="0 0 680 386" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Linux 内核 C 语言继承的内存布局</title>
+<desc>父类结构体内嵌在子类结构体的首位，两者起始地址完全相同</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="680" height="386" fill="#ffffff"/>
+<rect x="40" y="64" width="260" height="216" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="56" y="88" font-size="13" font-weight="500" fill="#0C447C">父类视角</text>
+<text x="56" y="106" font-size="12" fill="#185FA5" font-family="monospace">struct base *b</text>
+<rect x="56" y="116" width="228" height="40" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="70" y="136" font-size="13" fill="#042C53" font-family="monospace" dominant-baseline="central">int type;</text>
+<text x="272" y="136" font-size="12" fill="#185FA5" text-anchor="end" dominant-baseline="central">0</text>
+<rect x="56" y="162" width="228" height="40" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="70" y="182" font-size="13" fill="#042C53" font-family="monospace" dominant-baseline="central">void (*func)();</text>
+<text x="272" y="182" font-size="12" fill="#185FA5" text-anchor="end" dominant-baseline="central">8</text>
+<rect x="56" y="208" width="228" height="40" rx="8" fill="none" stroke="#B4B2A9" stroke-width="0.5" stroke-dasharray="4 3"/>
+<text x="170" y="228" font-size="12" fill="#888780" text-anchor="middle" dominant-baseline="central">父类看不到后面的字段</text>
+<text x="170" y="264" font-size="12" fill="#185FA5" text-anchor="middle">sizeof(struct base) = 16</text>
+<line x1="302" y1="136" x2="376" y2="136" stroke="#888780" stroke-width="0.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="339" y="124" font-size="12" fill="#5F5E5A" text-anchor="middle">同一段内存</text>
+<rect x="380" y="64" width="260" height="216" rx="12" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="396" y="88" font-size="13" font-weight="500" fill="#2C2C2A">对象真实内存</text>
+<text x="396" y="106" font-size="12" fill="#5F5E5A" font-family="monospace">struct derived *d</text>
+<rect x="396" y="116" width="228" height="40" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="410" y="136" font-size="13" fill="#042C53" font-family="monospace" dominant-baseline="central">int type;</text>
+<text x="612" y="136" font-size="12" fill="#185FA5" text-anchor="end" dominant-baseline="central">0</text>
+<rect x="396" y="162" width="228" height="40" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="410" y="182" font-size="13" fill="#042C53" font-family="monospace" dominant-baseline="central">void (*func)();</text>
+<text x="612" y="182" font-size="12" fill="#185FA5" text-anchor="end" dominant-baseline="central">8</text>
+<rect x="396" y="208" width="228" height="40" rx="8" fill="#D3D1C7" stroke="#888780" stroke-width="0.5"/>
+<text x="410" y="228" font-size="13" fill="#2C2C2A" font-family="monospace" dominant-baseline="central">int extra;</text>
+<text x="612" y="228" font-size="12" fill="#5F5E5A" text-anchor="end" dominant-baseline="central">16</text>
+<text x="510" y="264" font-size="12" fill="#5F5E5A" text-anchor="middle">多出的字段只有子类知道</text>
+<rect x="40" y="302" width="600" height="64" rx="12" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="60" y="328" font-size="13" font-weight="500" fill="#854F0B" font-family="monospace">&amp;d-&gt;base 与 (void *)d 是同一个地址</text>
+<text x="60" y="350" font-size="12" fill="#854F0B">C 标准 6.7.2.1p15：结构体地址 == 首成员地址，这是继承机制的根基</text>
+</svg>

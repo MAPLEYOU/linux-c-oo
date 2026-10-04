@@ -20,6 +20,8 @@
 但性能下降且**失去原子性**；部分 ARM / SPARC / MIPS 直接抛 `SIGBUS` 硬件异常。
 对齐的根本目的：**保证一次访问就能取到一个完整的基本类型值**。
 
+![内存对齐的物理原因](docs/images/内存对齐的物理原因.svg)
+
 **三条规则**：
 
 | # | 规则 |
@@ -87,6 +89,8 @@ p + 1;      /* 前进 sizeof(struct item) = 8 字节，不是 1 字节！ */
 > 想让指针按**字节**移动，必须先把它降级成 `char *` 或 `void *`。
 > 否则 `- 4` 会被解释成"退 4 个结构体"，而不是退 4 个字节。
 
+![为何要先转 void：计数单位对比](docs/images/为何要先转void-计数单位对比.svg)
+
 ### 1.3 Linux C 的「面向对象三件套」
 
 | OO 概念 | C 的实现手段 | 内核代表 |
@@ -113,6 +117,8 @@ struct i2c_client *client = to_i2c_client(dev);    /* 想要的却是子类对�
 > 名字里的 container 就是"容器"—— 装下这个成员的那个大结构体。
 
 **它在面向对象里的位置：这就是 C 版的「向下转型（downcast）」。**
+
+![upcast / downcast 方向辨析](docs/images/upcast-downcast-方向辨析.svg)
 
 有了它，内核那套"父类接口 + 子类实现"才转得起来：
 
@@ -151,6 +157,8 @@ struct derived d;
 ```
 
 于是子类指针可以随时当父类指针用 —— 这就是继承的全部秘密。
+
+![父子内存布局](docs/images/C继承-父子内存布局.svg)
 
 ### 2.2 内核实例：TCP 栈的四层继承链
 
@@ -230,6 +238,8 @@ upcast_tcp_to_sock:
 | `p - 1` | 1 个 `struct item` | 8 字节 | **越过** `&b`，差了 4 字节 ✗ |
 | `(char *)p - 4` | 1 字节 | 4 字节 | 正好命中 `&b` ✓ |
 
+![container_of 指针步进陷阱](docs/images/container_of-指针步进陷阱.svg)
+
 > [!TIP] 换个比喻
 > 一排停车位，每辆车占 8 个车位。`p - 1` 是"往前挪一辆**车**"（8 个车位）；
 > 而你要挪的是 4 个车位——半辆车。数车的尺子量不出半辆，得**换成"数车位"**。
@@ -292,6 +302,8 @@ downcast_dev_to_client:          ; 向下转型 = container_of
 `-32` 正是 `offsetof(struct i2c_client, dev)`。
 
 **成本模型**：继承本身免费；只有"从父类找回子类"要付一条减法。
+
+![container_of 父子指针双向转换](docs/images/container_of-父子指针双向转换.svg)
 
 ### 3.5 移植坑：MSVC 与 C++ 都不认内核原版
 
