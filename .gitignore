@@ -1,0 +1,17 @@
+# 编译产物
+*.exe
+*.o
+*.obj
+*.ilk
+*.pdb
+*.out
+
+# 无扩展名的可执行文件
+demo
+cofs
+mbt
+
+# 编辑器
+.vs/
+.vscode/
+*.user
