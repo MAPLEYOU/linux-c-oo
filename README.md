@@ -13,13 +13,57 @@
 
 ### 1.1 struct 的字节偏移怎么算
 
-成员按声明顺序排列，起始偏移受**对齐要求**约束，中间可能被填充。
+成员按声明顺序排列，但起始偏移受**对齐要求**约束，中间和尾部都可能被填充。
+
+**为什么必须对齐**：CPU 与内存之间是按「字」传输的（一次 4 或 8 字节）。
+一个 `int` 若跨在字边界上，硬件就得**读两次再移位拼接** —— x86-64 能软容忍，
+但性能下降且**失去原子性**；部分 ARM / SPARC / MIPS 直接抛 `SIGBUS` 硬件异常。
+对齐的根本目的：**保证一次访问就能取到一个完整的基本类型值**。
+
+**三条规则**：
+
+| # | 规则 |
+| --- | --- |
+| ① | 成员偏移 = 向上取整到**该成员对齐值**的倍数（不足则填充） |
+| ② | 结构体对齐值 = `max(所有成员的对齐值)` |
+| ③ | 结构体大小 = 向上取整到**结构体对齐值**的倍数（尾部填充） |
+
+规则三为什么存在？**只为了数组**：
 
 ```c
-struct item { int a; int b; };                        /* sizeof = 8，对齐 4 */
-struct box  { char tag; struct item it; int magic; };
-/*  tag@0   it@4（补 3 字节对齐）   magic@12   sizeof = 16  */
+struct tail { int a; char b; };    /* 字段只用到 5 字节 */
+sizeof(struct tail);               /* 但等于 8，不是 5 */
+
+struct tail arr[2];                /* 若 sizeof 是 5，arr[1].a 就落在偏移 5 → 未对齐 */
 ```
+
+**完整推演**（本仓库 demo 用的就是这个结构）：
+
+```c
+struct item { int a; int b; };                         /* size 8, align 4 */
+
+struct box  { char tag; struct item it; int magic; };
+/*  tag   @0    align 1，随便放
+ *  it    @4    0+1=1 不是 4 的倍数 → 补 3 字节
+ *  magic @12   4+8=12 是 4 的倍数 → 直接放
+ *  末尾 16，alignof(box)=4，16%4==0 → 无需再补
+ *  sizeof = 16
+ */
+```
+
+基本类型的对齐值（x86-64）：`char` 1 · `short` 2 · `int` 4 · `float` 4 · `double` 8 · 指针 8。
+**通常等于自身大小，且必为 2 的幂。**
+
+> [!WARNING] 注意 `long` 的平台差异
+> Windows 是 **LLP64**：`long` = 4 字节；Linux / macOS 是 **LP64**：`long` = 8 字节。
+> 跨平台的二进制协议里不要用 `long`。
+
+> [!TIP] 两个实用推论
+> **① 重排成员能省内存**：`{char; int; char;}` 占 12 字节，改成 `{int; char; char;}` 只要 8 字节。
+> **② `packed` 是有代价的**：`__attribute__((packed))` 能取消填充，但成员地址就不再对齐 ——
+> 只该用在「协议报文 / 磁盘格式」这种必须逐字节对应的场合。
+
+实测程序（打印每个中间数字）：[`src/alignment.c`](src/alignment.c)
 
 偏移量是**编译期常量**，用 `offsetof(struct box, it)` 拿到，值就是 `4`。
 
@@ -401,6 +445,7 @@ list_for_each_entry(pos, &tasks, node) {
 
 | 文件 | 内容 |
 | --- | --- |
+| [`src/alignment.c`](src/alignment.c) | 字节对齐规则实测：三条规则逐条验证 / 重排省内存 / `packed` 代价 / 与 `container_of` 的关系 |
 | [`src/linux_c_oo_demo.c`](src/linux_c_oo_demo.c) | 完整演示：四层继承链 / `container_of` 反向定位 / 误用对照 / 虚表多态 / `list_head` 遍历 |
 | [`src/container_of_step_by_step.c`](src/container_of_step_by_step.c) | `container_of` 最小拆解，打印每个中间数值 |
 | [`src/asm_check.c`](src/asm_check.c) | 汇编验证：upcast 零指令、downcast 一条减法 |
@@ -409,6 +454,7 @@ list_for_each_entry(pos, &tasks, node) {
 编译运行：
 
 ```bash
+gcc -std=gnu11 -O0 -g -Wall -Wextra src/alignment.c -o align && ./align
 gcc -std=gnu11 -O0 -g -Wall -Wextra src/linux_c_oo_demo.c -o demo && ./demo
 gcc -std=gnu11 -O0 -g -Wall -Wextra src/container_of_step_by_step.c -o cofs && ./cofs
 gcc -std=gnu11 -O2 -masm=intel -S src/asm_check.c -o src/asm_check.s
